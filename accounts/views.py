@@ -1,11 +1,13 @@
+from multiprocessing import context
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.views import LoginView
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, RedirectView
+from django.shortcuts import render
 
-from .forms import UserRegistrationForm, UserAddressForm
+from .forms import UserRegistrationForm, UserAddressForm, UpdateProfileForm, UpdateAccountForm, UpdateAddressForm
 
 
 User = get_user_model()
@@ -73,3 +75,63 @@ class LogoutView(RedirectView):
         if self.request.user.is_authenticated:
             logout(self.request)
         return super().get_redirect_url(*args, **kwargs)
+
+# class EditProfileView(TemplateView):
+#     template_name = 'accounts/edit_profile.html'
+
+#     def get_context_data(self, **kwargs):
+#         if 'form' not in kwargs:
+#             kwargs['form'] = UserAddressForm(
+#                 instance=self.request.user
+#             )
+#         return super().get_context_data(**kwargs)
+
+#     def post(self, request, *args, **kwargs):
+#         form = UserAddressForm(
+#             request.POST,
+#             instance=request.user
+#         )
+#         if form.is_valid():
+#             form.save()
+#             messages.success(
+#                 request,
+#                 'Your Profile Has Been Updated.'
+#             )
+#             return HttpResponseRedirect(
+#                 reverse_lazy('accounts:edit_profile')
+#             )
+#         return self.render_to_response(
+#             self.get_context_data(form=form)
+#         )
+
+def editProfile(request):
+    if request.method == 'GET':
+        profile_form = UpdateProfileForm(instance=request.user)
+        account_form = UpdateAccountForm(instance=request.user)
+        address_form = UpdateAddressForm(instance=request.user.address)
+        context = {'profile_form': profile_form, 'account_form': account_form, 'address_form': address_form}
+        return render(request, 'accounts/edit_profile.html', context)
+    else:
+        profile_form = UpdateProfileForm(request.POST, instance=request.user)
+        account_form = UpdateAccountForm(request.POST, instance=request.user)
+        address_form = UpdateAddressForm(request.POST, instance=request.user.address)
+
+        if profile_form.is_valid() and account_form.is_valid() and address_form.is_valid():
+            profile_form.save()
+            account_form.save()
+            address_form.save()
+            messages.success(
+                request,
+                'Your Profile Has Been Updated.'
+            )
+            return HttpResponseRedirect(
+                reverse_lazy('accounts:edit_profile')
+            )
+        else:
+            context = {'profile_form': profile_form, 'account_form': account_form, 'address_form': address_form}
+            return render(request, 'accounts/edit_profile.html', context)
+
+
+
+
+
