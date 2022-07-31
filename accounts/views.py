@@ -1,11 +1,15 @@
+
 from multiprocessing import context
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.views import LoginView
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import TemplateView, RedirectView, ListView
 from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from accounts.models import Meeting
 
 from .forms import UserRegistrationForm, UserAddressForm, UpdateProfileForm, UpdateAccountForm, UpdateAddressForm
 
@@ -76,33 +80,6 @@ class LogoutView(RedirectView):
             logout(self.request)
         return super().get_redirect_url(*args, **kwargs)
 
-# class EditProfileView(TemplateView):
-#     template_name = 'accounts/edit_profile.html'
-
-#     def get_context_data(self, **kwargs):
-#         if 'form' not in kwargs:
-#             kwargs['form'] = UserAddressForm(
-#                 instance=self.request.user
-#             )
-#         return super().get_context_data(**kwargs)
-
-#     def post(self, request, *args, **kwargs):
-#         form = UserAddressForm(
-#             request.POST,
-#             instance=request.user
-#         )
-#         if form.is_valid():
-#             form.save()
-#             messages.success(
-#                 request,
-#                 'Your Profile Has Been Updated.'
-#             )
-#             return HttpResponseRedirect(
-#                 reverse_lazy('accounts:edit_profile')
-#             )
-#         return self.render_to_response(
-#             self.get_context_data(form=form)
-#         )
 
 def editProfile(request):
     if request.method == 'GET':
@@ -132,6 +109,32 @@ def editProfile(request):
             return render(request, 'accounts/edit_profile.html', context)
 
 
+def attendance(request):
+    # attendance_list = request.meeting.attendance_set.all(user=request.user)
+    # context = {'attendance_list': attendance_list}
+    return render(request, 'accounts/attendance.html', context)
 
+class AttendanceView(LoginRequiredMixin, ListView):
+    model = Meeting
+    template_name = 'accounts/attendance.html'
+    context_object_name = 'attendance_list'
 
+    def get_queryset(self):
+        return self.model.attendance_set.filter(user=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['meeting_list'] = Meeting.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        meeting_id = request.POST.get('meeting_id')
+        meeting = Meeting.objects.get(id=meeting_id)
+        # attendance = Attendance.objects.create(user=request.user, meeting=meeting)
+        # messages.success(
+        #     request,
+        #     'You Have Been Marked As Present For The Meeting.'
+        # )
+        return HttpResponseRedirect(
+            reverse_lazy('accounts:attendance')
+        )

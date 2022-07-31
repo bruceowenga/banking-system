@@ -122,3 +122,13 @@ class UserAddress(models.Model):
 
     def __str__(self):
         return self.user.email
+
+
+class Meeting(models.Model):
+    meeting_name = models.CharField(max_length=256, blank=True)
+    attendees = models.ManyToManyField(
+        User, related_name='meetings', blank=True)
+    date = models.DateField()
+
+    def __str__(self):
+        return str(self.meeting_name) + ' ' + str(self.date)

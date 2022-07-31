@@ -1,7 +1,7 @@
 from . import views
 from django.urls import path
 
-from .views import UserRegistrationView, LogoutView, UserLoginView, editProfile
+from .views import UserRegistrationView, LogoutView, UserLoginView, editProfile, AttendanceView
 
 
 app_name = 'accounts'
@@ -22,5 +22,9 @@ urlpatterns = [
     path(
         "profile/", views.editProfile,
         name="edit_profile"
+    ),
+    path(
+        "attendance/", AttendanceView.as_view(), 
+        name="attendance"
     )
 ]
